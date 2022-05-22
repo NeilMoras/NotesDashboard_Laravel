@@ -1,7 +1,8 @@
 <?php
 
-use App\Http\Controllers\NoteController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\NoteController;
+use App\Http\Controllers\TrashNoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,6 +24,23 @@ Route::get('/dashboard', function () {
 })->middleware(['auth'])->name('dashboard');
 
 Route::resource('/notes', NoteController::class)->middleware(['auth']);
+Route::get('/trashed', [TrashNoteController::class, 'index'])->middleware('auth')->name('trashed.index');
+Route::get('/trashed/{note}', [TrashNoteController::class, 'show'])->withTrashed()->middleware('auth')->name('trashed.show');
+
+Route::put('/trashed/{note}', [TrashNoteController::class, 'update'])->withTrashed()->middleware('auth')->name('trashed.update');
+Route::delete('/trashed/{note}', [TrashNoteController::class, 'destroy'])->withTrashed()->middleware('auth')->name('trashed.destroy');
+
+
+
+Route::get('/notes/javascript', [NoteController::class, 'index'])->name('javascript');
+
+Route::get('/notes/css', function () {
+    //
+})->name('css');
+
+Route::get('/notes/html', function () {
+    //
+})->name('html');
 
 // Route::get('/notes',);
 

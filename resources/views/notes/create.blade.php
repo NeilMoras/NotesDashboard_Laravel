@@ -11,9 +11,23 @@
                         <div class="p-6 bg-white border-b border-gray-200">
             <form action="{{ route('notes.store') }}" method="post">
                 @csrf
+                <select name="language" class="
+                mb-4 arounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50' aria-label=".form-select-sm example">
+                <option selected>Select Code language</option>
+                {{-- <option value="javascript">JavaScript</option>
+                <option value="html">HTML</option> --}}
+                @foreach($notes as $note)
+                  <option value="{{ $note->language }}">{{ $note->language }}</option>
+                  @endforeach
+                  <option >Add New Language</option>
+                </select>
+                <span class="m-4">OR</span>
+                <x-input class=" mb-4" field="language" type="text" name="language" placeholder="New Language" autocomplete="off"  :value="@old('language')"/>
                 <x-input class="w-full mb-4" field="title" type="text" name="title" placeholder="Title" autocomplete="off"  :value="@old('title')"/>
                 <x-textarea class="w-full" field="text" name="text"  cols="30" rows="10" placeholder="Start typing here" :value="@old('text')"></x-textarea>
                 <x-button class="mt-6">Save Note</x-button>
+            </div>
+        </div>
             </form>
                 </div>
             </div>

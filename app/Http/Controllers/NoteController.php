@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Note;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,8 +16,13 @@ class NoteController extends Controller
      */
     public function index()
     {
-        $notes = Note::where('user_id', Auth::id())->latest('updated_at')->paginate(5);
+        // $notes = Note::where('user_id', Auth::id())->latest('updated_at')->paginate(5);
         // dd($notes);
+        // $notes =  Auth::user()->notes()->latest('updated_at')
+        // ->paginate(5);
+
+        // OR inverse relationship
+        $notes = Note::whereBelongsTo(Auth::user())->latest('updated_at')->paginate(5);
         return view('notes.index')->with('notes', $notes);
     }
 
@@ -27,7 +33,8 @@ class NoteController extends Controller
      */
     public function create()
     {
-        return view('notes.create');
+        $notes = Note::where('user_id', Auth::id())->latest('updated_at')->paginate(5);
+        return view('notes.create')->with('notes', $notes);;
     }
 
     /**
@@ -43,8 +50,10 @@ class NoteController extends Controller
             'text'  =>  'required'
         ]);
 
-        Note::create([
+        Auth::user()->notes()->create([
+            'uuid' => Str::uuid(),
             'user_id' => Auth::id(),
+            'language' => $request->language,
             'title' => $request->title,
             'text' => $request->text
         ]);
@@ -58,9 +67,17 @@ class NoteController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+
+    //  Route model binding,Injecting the entire model to the route
+    public function show(Note $note)
     {
-        $note = Note::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        // $note = Note::where('uuid', $uuid)->where('user_id', Auth::id())->firstOrFail();
+
+        // if the user id does not match the login id the throw an error
+        //if the notes user id not autherised to the user note then abort
+        if (!$note->user->is(Auth::user())) {
+            return abort(403);
+        }
         return view('notes.show')->with('note', $note);
     }
 
@@ -70,9 +87,12 @@ class NoteController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Note $note)
     {
-        //
+        if (!$note->user->is(Auth::user())) {
+            return abort(403);
+        }
+        return view('notes.edit')->with('note', $note);
     }
 
     /**
@@ -82,9 +102,21 @@ class NoteController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, note $note)
     {
-        //
+        $request->validate([
+            'title' => 'required|max:120',
+            'text'  =>  'required',
+            'language'  =>  'required'
+        ]);
+
+        $note->update([
+            'language' => $request->language,
+            'title' => $request->title,
+            'text' => $request->text
+        ]);
+
+        return to_route('notes.show', $note)->with('success', 'Note Updated Successfully');
     }
 
     /**
@@ -93,8 +125,21 @@ class NoteController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Note $note)
     {
-        //
+
+        if (!$note->user->is(Auth::user())) {
+            return abort(403);
+        }
+
+        $note->delete();
+
+        return to_route('notes.index')->with('success', 'Note moved to trash Successfully');
     }
+
+
+    // public function javascript()
+    // {
+    //     return view('notes.javascript');
+    // }
 }
